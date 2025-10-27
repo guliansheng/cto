@@ -962,9 +962,9 @@ function renderHtml(): string {
       if (state.user.role === 'admin') {
         const targetCode = state.selectedUser || state.user.code;
         state.selectedUser = targetCode;
-        params = `?code=${encodeURIComponent(targetCode)}`;
+        params = \`?code=\${encodeURIComponent(targetCode)}\`;
       }
-      const data = await apiFetch(`/api/interfaces${params}`);
+      const data = await apiFetch(\`/api/interfaces\${params}\`);
       state.interfaces = data?.interfaces || [];
     };
 
@@ -1016,9 +1016,9 @@ function renderHtml(): string {
     const handleDeleteInterface = async (id) => {
       try {
         const params = state.user.role === 'admin' && state.selectedUser
-          ? `?code=${encodeURIComponent(state.selectedUser)}`
+          ? \`?code=\${encodeURIComponent(state.selectedUser)}\`
           : '';
-        await apiFetch(`/api/interfaces/${id}${params}`, { method: 'DELETE' });
+        await apiFetch(\`/api/interfaces/\${id}\${params}\`, { method: 'DELETE' });
         setMessage('接口已删除');
         await loadInterfaces();
       } catch (error) {
@@ -1050,7 +1050,7 @@ function renderHtml(): string {
 
     const handleDeletePublicInterface = async (id) => {
       try {
-        await apiFetch(`/api/public-interfaces/${id}`, { method: 'DELETE' });
+        await apiFetch(\`/api/public-interfaces/\${id}\`, { method: 'DELETE' });
         setMessage('接口广场条目已删除');
         await loadPublicInterfaces();
       } catch (error) {
@@ -1082,7 +1082,7 @@ function renderHtml(): string {
     const handleDeleteAccessCode = async (code) => {
       if (!confirm('确认删除该访问码？')) return;
       try {
-        await apiFetch(`/api/access-codes/${code}`, { method: 'DELETE' });
+        await apiFetch(\`/api/access-codes/\${code}\`, { method: 'DELETE' });
         setMessage('访问码已删除');
         await Promise.all([loadAccessCodes(), loadUsers(), loadInterfaces()]);
       } catch (error) {
@@ -1097,7 +1097,7 @@ function renderHtml(): string {
       await copyText(input.value);
     };
 
-    const renderLogin = () => `
+    const renderLogin = () => \`
       <div class="card login-card">
         <h2>授权码登录</h2>
         <p class="item-meta">请输入管理员提供的授权码以访问系统</p>
@@ -1109,26 +1109,26 @@ function renderHtml(): string {
           <button type="submit">登录系统</button>
         </form>
       </div>
-    `;
+    \`;
 
     const renderInterfaceList = () => {
       if (!state.interfaces.length) {
         return '<p class="item-meta">暂无接口，请先创建。</p>';
       }
-      return state.interfaces.map((item) => `
+      return state.interfaces.map((item) => \`
         <div class="item">
           <div class="item-header">
             <div>
-              <div class="item-title">${item.name}</div>
-              <div class="item-meta">${item.url}</div>
+              <div class="item-title">\${item.name}</div>
+              <div class="item-meta">\${item.url}</div>
             </div>
             <div class="actions">
-              <button class="danger" data-action="delete-interface" data-id="${item.id}">删除</button>
+              <button class="danger" data-action="delete-interface" data-id="\${item.id}">删除</button>
             </div>
           </div>
-          ${item.description ? `<div class="item-meta">${item.description}</div>` : ''}
+          \${item.description ? \`<div class="item-meta">\${item.description}</div>\` : ''}
         </div>
-      `).join('');
+      \`).join('');
     };
 
     const renderPublicList = () => {
@@ -1137,19 +1137,19 @@ function renderHtml(): string {
       }
       return state.publicInterfaces.map((item) => {
         const canDelete = state.user.role === 'admin' || item.createdBy === state.user.code;
-        return `
+        return \`
           <div class="item">
             <div class="item-header">
               <div>
-                <div class="item-title">${item.name}</div>
-                <div class="item-meta">${item.url}</div>
+                <div class="item-title">\${item.name}</div>
+                <div class="item-meta">\${item.url}</div>
               </div>
-              ${canDelete ? `<div class="actions"><button class="danger" data-action="delete-public" data-id="${item.id}">删除</button></div>` : ''}
+              \${canDelete ? \`<div class="actions"><button class="danger" data-action="delete-public" data-id="\${item.id}">删除</button></div>\` : ''}
             </div>
-            ${item.description ? `<div class="item-meta">${item.description}</div>` : ''}
-            <div class="item-meta">发布者：${item.createdBy}</div>
+            \${item.description ? \`<div class="item-meta">\${item.description}</div>\` : ''}
+            <div class="item-meta">发布者：\${item.createdBy}</div>
           </div>
-        `;
+        \`;
       }).join('');
     };
 
@@ -1159,22 +1159,22 @@ function renderHtml(): string {
       }
       return state.accessCodes.map((item) => {
         const owner = state.users.find((user) => user.code === item.code);
-        const shareLink = owner ? `${window.location.origin}/u/${owner.shareId}` : '';
-        return `
+        const shareLink = owner ? \`\${window.location.origin}/u/\${owner.shareId}\` : '';
+        return \`
           <div class="item">
             <div class="item-header">
               <div>
-                <div class="item-title">${item.code}</div>
-                <div class="item-meta">创建时间：${new Date(item.createdAt).toLocaleString()}</div>
+                <div class="item-title">\${item.code}</div>
+                <div class="item-meta">创建时间：\${new Date(item.createdAt).toLocaleString()}</div>
               </div>
               <div class="actions">
-                <button class="danger" data-action="delete-access" data-code="${item.code}">删除</button>
+                <button class="danger" data-action="delete-access" data-code="\${item.code}">删除</button>
               </div>
             </div>
-            ${item.note ? `<div class="item-meta">备注：${item.note}</div>` : ''}
-            ${shareLink ? `<div class="share-inline"><span class="item-meta">访问地址：${shareLink}</span><button data-action="copy-link" data-link="${shareLink}">复制</button></div>` : ''}
+            \${item.note ? \`<div class="item-meta">备注：\${item.note}</div>\` : ''}
+            \${shareLink ? \`<div class="share-inline"><span class="item-meta">访问地址：\${shareLink}</span><button data-action="copy-link" data-link="\${shareLink}">复制</button></div>\` : ''}
           </div>
-        `;
+        \`;
       }).join('');
     };
 
@@ -1182,50 +1182,50 @@ function renderHtml(): string {
       if (!state.users.length || state.user.role !== 'admin') {
         return '';
       }
-      return `
+      return \`
         <div class="input-group">
           <label>选择用户以管理接口</label>
           <select id="user-selector">
-            ${state.users.map((user) => `
-              <option value="${user.code}" ${state.selectedUser === user.code ? 'selected' : ''}>
-                ${user.code}${user.role === 'admin' ? '（管理员）' : `（接口 ${user.interfaceCount} 个）`}
+            \${state.users.map((user) => \`
+              <option value="\${user.code}" \${state.selectedUser === user.code ? 'selected' : ''}>
+                \${user.code}\${user.role === 'admin' ? '（管理员）' : \`（接口 \${user.interfaceCount} 个）\`}
               </option>
-            `).join('')}
+            \`).join('')}
           </select>
         </div>
-      `;
+      \`;
     };
 
     const renderDashboard = () => {
       const shareOwner = state.user.role === 'admin'
         ? state.users.find((user) => user.code === state.selectedUser) || state.user
         : state.user;
-      const shareLink = shareOwner ? `${window.location.origin}/u/${shareOwner.shareId}` : '';
+      const shareLink = shareOwner ? \`\${window.location.origin}/u/\${shareOwner.shareId}\` : '';
       const shareLabel = state.user.role === 'admin'
-        ? `接口访问地址（${shareOwner.code}）`
+        ? \`接口访问地址（\${shareOwner.code}）\`
         : '接口访问地址';
 
-      return `
+      return \`
         <div class="card">
           <div class="section-header">
-            <h3>欢迎，${state.user.code}</h3>
+            <h3>欢迎，\${state.user.code}</h3>
             <button id="logout-btn">退出</button>
           </div>
           <div class="share-link">
-            <label>${shareLabel}</label>
+            <label>\${shareLabel}</label>
             <div class="share-link-input">
-              <input id="share-link-input" value="${shareLink}" readonly />
+              <input id="share-link-input" value="\${shareLink}" readonly />
               <button id="copy-share">复制</button>
             </div>
           </div>
           <div class="tabs">
-            <div class="tab ${state.activeTab === 'interfaces' ? 'active' : ''}" data-tab="interfaces">接口管理</div>
-            <div class="tab ${state.activeTab === 'public' ? 'active' : ''}" data-tab="public">接口广场</div>
-            ${state.user.role === 'admin' ? `<div class="tab ${state.activeTab === 'codes' ? 'active' : ''}" data-tab="codes">访问码管理</div>` : ''}
+            <div class="tab \${state.activeTab === 'interfaces' ? 'active' : ''}" data-tab="interfaces">接口管理</div>
+            <div class="tab \${state.activeTab === 'public' ? 'active' : ''}" data-tab="public">接口广场</div>
+            \${state.user.role === 'admin' ? \`<div class="tab \${state.activeTab === 'codes' ? 'active' : ''}" data-tab="codes">访问码管理</div>\` : ''}
           </div>
-          ${state.message ? `<div class="alert ${state.messageType === 'error' ? 'error' : ''}">${state.message}</div>` : ''}
-          ${state.activeTab === 'interfaces' ? `
-            ${renderUsersSelect()}
+          \${state.message ? \`<div class="alert \${state.messageType === 'error' ? 'error' : ''}">\${state.message}</div>\` : ''}
+          \${state.activeTab === 'interfaces' ? \`
+            \${renderUsersSelect()}
             <form id="create-interface" class="form-inline">
               <div class="input-group">
                 <label>接口名称</label>
@@ -1241,9 +1241,9 @@ function renderHtml(): string {
               </div>
               <button type="submit">创建接口</button>
             </form>
-            <div class="list" id="interface-list">${renderInterfaceList()}</div>
-          ` : ''}
-          ${state.activeTab === 'public' ? `
+            <div class="list" id="interface-list">\${renderInterfaceList()}</div>
+          \` : ''}
+          \${state.activeTab === 'public' ? \`
             <form id="create-public" class="form-inline">
               <div class="input-group">
                 <label>接口名称</label>
@@ -1259,9 +1259,9 @@ function renderHtml(): string {
               </div>
               <button type="submit">发布到接口广场</button>
             </form>
-            <div class="list" id="public-list">${renderPublicList()}</div>
-          ` : ''}
-          ${state.activeTab === 'codes' ? `
+            <div class="list" id="public-list">\${renderPublicList()}</div>
+          \` : ''}
+          \${state.activeTab === 'codes' ? \`
             <form id="create-access" class="form-inline">
               <div class="input-group">
                 <label>访问码（留空将自动生成）</label>
@@ -1273,10 +1273,10 @@ function renderHtml(): string {
               </div>
               <button type="submit">创建访问码</button>
             </form>
-            <div class="list" id="access-list">${renderAccessCodes()}</div>
-          ` : ''}
+            <div class="list" id="access-list">\${renderAccessCodes()}</div>
+          \` : ''}
         </div>
-      `;
+      \`;
     };
 
     const render = () => {
