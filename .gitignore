@@ -1,0 +1,6 @@
+node_modules/
+.npmrc
+wrangler.toml.local
+wrangler.local.toml
+.DS_Store
+.env
