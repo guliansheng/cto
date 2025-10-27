@@ -1,0 +1,11 @@
+name = "movie-api-management"
+main = "src/index.ts"
+compatibility_date = "2024-10-07"
+
+[vars]
+SESSION_TTL_SECONDS = "86400"
+
+[[kv_namespaces]]
+binding = "MOVIE_API_DB"
+id = "REPLACE_WITH_YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_YOUR_PREVIEW_NAMESPACE_ID"
