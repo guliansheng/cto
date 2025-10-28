@@ -106,6 +106,7 @@ wrangler kv namespace create MOVIE_API_DB --preview
 name = "movie-api-management"
 main = "src/index.ts"
 compatibility_date = "2024-10-07"
+pages_build_output_dir = "public"
 
 [vars]
 SESSION_TTL_SECONDS = "86400"
@@ -117,6 +118,7 @@ preview_id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
 ```
 
 > 若暂未创建预览命名空间，可先删除 `preview_id` 行，后续再补充。
+> 如部署到 Cloudflare Pages，请根据实际构建产物调整 `pages_build_output_dir` 路径（默认指向 `public/`）。
 
 ### 5. 设置密钥与环境变量
 
@@ -146,19 +148,24 @@ npm run dev
 
 ### 7. 正式部署到 Cloudflare
 
-在执行以下命令前，请确保已经为 Wrangler 提供 Cloudflare API Token（支持 `CLOUDFLARE_API_TOKEN` 或 `CF_API_TOKEN`）：
+在执行以下命令前，请确保已经为 Wrangler 提供合法的 Cloudflare API 凭证，可以是 API Token，也可以是全局 API Key + Email 组合：
 
-- 在 Cloudflare 控制台的 **My Profile → API Tokens** 中创建具备 Workers 权限的 Token。
-- 可以直接将 Token 写入系统环境变量，也可以在项目根目录创建 `.env` 文件：
+- **方式 1：API Token**
+  - 在 Cloudflare 控制台的 **My Profile → API Tokens** 中创建具备 Workers 权限的 Token。
+  - 将 Token 写入系统环境变量，或在项目根目录创建 `.env` 文件：
 
-  ```env
-  CLOUDFLARE_API_TOKEN=your_token_here
-  # 或使用 CF_API_TOKEN=your_token_here
-  ```
+    ```env
+    CLOUDFLARE_API_TOKEN=your_token_here
+    # 或使用 CF_API_TOKEN=your_token_here
+    ```
 
-- 若希望将 Token 存储在文件中，可设置 `CLOUDFLARE_API_TOKEN_FILE` / `CF_API_TOKEN_FILE` 指向该文件。
+  - 若希望将 Token 存储在文件中，可设置 `CLOUDFLARE_API_TOKEN_FILE` / `CF_API_TOKEN_FILE` 指向该文件。
 
-`npm run deploy` 会自动读取 `.env` 或上述环境变量，并传递 Token 给 Wrangler。
+- **方式 2：全局 API Key + Email**
+  - 在 **My Profile → API Keys** 中获取 Global API Key，并确认绑定的账号邮箱。
+  - 通过环境变量或 `.env` 文件提供 `CLOUDFLARE_API_KEY`（或 `CF_API_KEY`）与 `CLOUDFLARE_EMAIL`（或 `CF_EMAIL`）。
+
+`npm run deploy` 会自动检测上述环境变量、`.env` 文件或 *_FILE 变量，并为 Wrangler 配置认证信息。
 
 ```bash
 npm run deploy

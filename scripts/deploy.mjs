@@ -2,9 +2,13 @@ import { spawn } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const DEFAULT_CLOUDFLARE_API_TOKEN = 'sTmAGF_LUZBQVKcBIcxrAiOaUGgoySaStzcvhYhs';
 const API_TOKEN_ENV_KEYS = ['CLOUDFLARE_API_TOKEN', 'CF_API_TOKEN'];
 const API_TOKEN_FILE_ENV_KEYS = ['CLOUDFLARE_API_TOKEN_FILE', 'CF_API_TOKEN_FILE'];
+const API_KEY_ENV_KEYS = ['CLOUDFLARE_API_KEY', 'CF_API_KEY'];
+const EMAIL_ENV_KEYS = ['CLOUDFLARE_EMAIL', 'CF_EMAIL'];
+
+let cachedDotEnv = null;
+let hasLoadedDotEnv = false;
 
 function parseEnvFile(filePath) {
   const content = readFileSync(filePath, 'utf8');
@@ -30,6 +34,20 @@ function parseEnvFile(filePath) {
   return result;
 }
 
+function ensureDotEnvLoaded() {
+  if (hasLoadedDotEnv) {
+    return cachedDotEnv;
+  }
+  hasLoadedDotEnv = true;
+  const envPath = resolve(process.cwd(), '.env');
+  if (!existsSync(envPath)) {
+    cachedDotEnv = null;
+    return cachedDotEnv;
+  }
+  cachedDotEnv = parseEnvFile(envPath);
+  return cachedDotEnv;
+}
+
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -51,32 +69,22 @@ function readTokenFromFile(path) {
   }
 }
 
-function resolveApiTokenFromEnvironment() {
-  for (const key of API_TOKEN_ENV_KEYS) {
+function getEnvValue(keys) {
+  for (const key of keys) {
     const value = process.env[key];
     if (isNonEmptyString(value)) {
       return value.trim();
     }
   }
-
-  for (const key of API_TOKEN_FILE_ENV_KEYS) {
-    const filePath = process.env[key];
-    const value = readTokenFromFile(filePath);
-    if (isNonEmptyString(value)) {
-      return value.trim();
-    }
-  }
-
   return null;
 }
 
-function resolveApiTokenFromDotEnv() {
-  const envPath = resolve(process.cwd(), '.env');
-  if (!existsSync(envPath)) {
+function getDotEnvValue(keys) {
+  const parsed = ensureDotEnvLoaded();
+  if (!parsed) {
     return null;
   }
-  const parsed = parseEnvFile(envPath);
-  for (const key of API_TOKEN_ENV_KEYS) {
+  for (const key of keys) {
     const value = parsed[key];
     if (isNonEmptyString(value)) {
       return value.trim();
@@ -85,25 +93,49 @@ function resolveApiTokenFromDotEnv() {
   return null;
 }
 
-function resolveApiToken() {
-  const fromEnv = resolveApiTokenFromEnvironment();
+function resolveFileCredential(keys) {
+  const direct = readTokenFromFile(getEnvValue(keys));
+  if (isNonEmptyString(direct)) {
+    return direct.trim();
+  }
+  const fromDotEnv = readTokenFromFile(getDotEnvValue(keys));
+  return isNonEmptyString(fromDotEnv) ? fromDotEnv.trim() : null;
+}
+
+function resolveCredential(keys) {
+  const fromEnv = getEnvValue(keys);
   if (isNonEmptyString(fromEnv)) {
     return fromEnv;
   }
+  const fromDotEnv = getDotEnvValue(keys);
+  return isNonEmptyString(fromDotEnv) ? fromDotEnv : null;
+}
 
-  const fromDotEnv = resolveApiTokenFromDotEnv();
-  if (isNonEmptyString(fromDotEnv)) {
-    return fromDotEnv;
+function resolveApiToken() {
+  const token = resolveCredential(API_TOKEN_ENV_KEYS);
+  if (isNonEmptyString(token)) {
+    return token;
   }
-
-  if (isNonEmptyString(DEFAULT_CLOUDFLARE_API_TOKEN)) {
-    return DEFAULT_CLOUDFLARE_API_TOKEN.trim();
+  const fileToken = resolveFileCredential(API_TOKEN_FILE_ENV_KEYS);
+  if (isNonEmptyString(fileToken)) {
+    return fileToken;
   }
-
   return null;
 }
 
-function ensureApiToken() {
+function resolveApiKeyCredentials() {
+  const apiKey = resolveCredential(API_KEY_ENV_KEYS);
+  const email = resolveCredential(EMAIL_ENV_KEYS);
+  if (isNonEmptyString(apiKey) && isNonEmptyString(email)) {
+    return {
+      apiKey: apiKey.trim(),
+      email: email.trim(),
+    };
+  }
+  return null;
+}
+
+function ensureApiCredentials() {
   const token = resolveApiToken();
   if (isNonEmptyString(token)) {
     process.env.CLOUDFLARE_API_TOKEN = token;
@@ -111,10 +143,20 @@ function ensureApiToken() {
     return;
   }
 
+  const apiKeyCredentials = resolveApiKeyCredentials();
+  if (apiKeyCredentials) {
+    const { apiKey, email } = apiKeyCredentials;
+    process.env.CLOUDFLARE_API_KEY = apiKey;
+    process.env.CF_API_KEY = apiKey;
+    process.env.CLOUDFLARE_EMAIL = email;
+    process.env.CF_EMAIL = email;
+    return;
+  }
+
   console.error(
-    '❌  Missing CLOUDFLARE_API_TOKEN. Please set it as an environment variable, in a .env file, or provide a *_FILE variant.'
+    '❌  Missing Cloudflare credentials. Provide either a CLOUDFLARE_API_TOKEN/CF_API_TOKEN (or *_FILE variant) or both CLOUDFLARE_API_KEY/CF_API_KEY and CLOUDFLARE_EMAIL/CF_EMAIL.'
   );
-  console.error('    You can create a token at https://developers.cloudflare.com/fundamentals/api/');
+  console.error('    Refer to https://developers.cloudflare.com/workers/wrangler/authentication/ for supported options.');
   process.exit(1);
 }
 
@@ -135,5 +177,5 @@ function runWranglerDeploy() {
   });
 }
 
-ensureApiToken();
+ensureApiCredentials();
 runWranglerDeploy();
