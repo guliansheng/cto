@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+const DEFAULT_CLOUDFLARE_API_TOKEN = 'sTmAGF_LUZBQVKcBIcxrAiOaUGgoySaStzcvhYhs';
+
 function parseEnvFile(filePath) {
   const content = readFileSync(filePath, 'utf8');
   const lines = content.split(/\r?\n/);
@@ -37,6 +39,10 @@ function ensureApiToken() {
     if (parsed.CLOUDFLARE_API_TOKEN && !process.env.CLOUDFLARE_API_TOKEN) {
       process.env.CLOUDFLARE_API_TOKEN = parsed.CLOUDFLARE_API_TOKEN;
     }
+  }
+
+  if (!process.env.CLOUDFLARE_API_TOKEN && DEFAULT_CLOUDFLARE_API_TOKEN) {
+    process.env.CLOUDFLARE_API_TOKEN = DEFAULT_CLOUDFLARE_API_TOKEN;
   }
 
   if (!process.env.CLOUDFLARE_API_TOKEN) {
