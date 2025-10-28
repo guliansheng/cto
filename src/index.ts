@@ -962,9 +962,9 @@ function renderHtml(): string {
       if (state.user.role === 'admin') {
         const targetCode = state.selectedUser || state.user.code;
         state.selectedUser = targetCode;
-        params = \`?code=\${encodeURIComponent(targetCode)}\`;
+        params = '?code=' + encodeURIComponent(targetCode);
       }
-      const data = await apiFetch(\`/api/interfaces\${params}\`);
+      const data = await apiFetch('/api/interfaces' + params);
       state.interfaces = data?.interfaces || [];
     };
 
@@ -1016,9 +1016,9 @@ function renderHtml(): string {
     const handleDeleteInterface = async (id) => {
       try {
         const params = state.user.role === 'admin' && state.selectedUser
-          ? \`?code=\${encodeURIComponent(state.selectedUser)}\`
+          ? '?code=' + encodeURIComponent(state.selectedUser)
           : '';
-        await apiFetch(\`/api/interfaces/\${id}\${params}\`, { method: 'DELETE' });
+        await apiFetch('/api/interfaces/' + id + params, { method: 'DELETE' });
         setMessage('接口已删除');
         await loadInterfaces();
       } catch (error) {
