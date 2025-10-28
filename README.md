@@ -146,7 +146,16 @@ npm run dev
 
 ### 7. 正式部署到 Cloudflare
 
-执行一次构建与发布：
+在执行以下命令前，请确保已经为 Wrangler 提供 `CLOUDFLARE_API_TOKEN`：
+
+- 在 Cloudflare 控制台的 **My Profile → API Tokens** 中创建具备 Workers 权限的 Token。
+- 将生成的值写入系统环境变量，或在项目根目录创建 `.env` 文件：
+
+  ```env
+  CLOUDFLARE_API_TOKEN=your_token_here
+  ```
+
+`npm run deploy` 会自动读取 `.env` 中的 Token 并传递给 Wrangler。
 
 ```bash
 npm run deploy
