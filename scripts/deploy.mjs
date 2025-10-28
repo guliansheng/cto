@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { homedir } from 'node:os';
 
 const API_TOKEN_ENV_KEYS = ['CLOUDFLARE_API_TOKEN', 'CF_API_TOKEN'];
 const API_TOKEN_FILE_ENV_KEYS = ['CLOUDFLARE_API_TOKEN_FILE', 'CF_API_TOKEN_FILE'];
@@ -52,13 +53,71 @@ function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function normalizePath(input) {
+  if (!isNonEmptyString(input)) {
+    return null;
+  }
+  const trimmed = input.trim();
+  if (trimmed === '~') {
+    return homedir();
+  }
+  if (trimmed.startsWith('~/')) {
+    return resolve(homedir(), trimmed.slice(2));
+  }
+  if (trimmed.startsWith('~\\')) {
+    return resolve(homedir(), trimmed.slice(2));
+  }
+  return resolve(trimmed);
+}
+
+function collectWranglerConfigCandidates() {
+  const candidates = new Set();
+
+  const explicit = normalizePath(process.env.WRANGLER_CONFIG_PATH);
+  if (explicit) {
+    candidates.add(explicit);
+  }
+
+  const homes = new Set();
+  const customHome = normalizePath(process.env.WRANGLER_HOME);
+  if (customHome) {
+    homes.add(customHome);
+  }
+  homes.add(resolve(process.cwd(), '.wrangler'));
+  homes.add(resolve(homedir(), '.wrangler'));
+
+  for (const base of homes) {
+    candidates.add(resolve(base, 'default.toml'));
+    candidates.add(resolve(base, 'config', 'default.toml'));
+  }
+
+  return Array.from(candidates);
+}
+
+function hasPersistentWranglerLogin() {
+  for (const candidate of collectWranglerConfigCandidates()) {
+    try {
+      if (!existsSync(candidate)) {
+        continue;
+      }
+      const stats = statSync(candidate);
+      if (stats.isFile()) {
+        return true;
+      }
+    } catch (error) {
+      // ignore and continue checking the rest of the candidates
+    }
+  }
+  return false;
+}
+
 function readTokenFromFile(path) {
   try {
     if (!isNonEmptyString(path)) {
       return null;
     }
-    const resolvedPath = resolve(path.trim());
-    if (!existsSync(resolvedPath)) {
+    const resolvedPath = normalizePath(path);
+    if (!resolvedPath || !existsSync(resolvedPath)) {
       return null;
     }
     const content = readFileSync(resolvedPath, 'utf8').trim();
@@ -150,6 +209,11 @@ function ensureApiCredentials() {
     process.env.CF_API_KEY = apiKey;
     process.env.CLOUDFLARE_EMAIL = email;
     process.env.CF_EMAIL = email;
+    return;
+  }
+
+  if (hasPersistentWranglerLogin()) {
+    console.log('ℹ️  Using existing Wrangler authentication from wrangler login.');
     return;
   }
 
