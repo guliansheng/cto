@@ -104,7 +104,6 @@ wrangler kv namespace create MOVIE_API_DB --preview
 
 ```toml
 name = "movie-api-management"
-main = "src/index.ts"
 compatibility_date = "2024-10-07"
 pages_build_output_dir = "public"
 
@@ -119,6 +118,7 @@ preview_id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
 
 > 若暂未创建预览命名空间，可先删除 `preview_id` 行，后续再补充。
 > 如部署到 Cloudflare Pages，请根据实际构建产物调整 `pages_build_output_dir` 路径（默认指向 `public/`）。
+> 如果你计划将项目作为传统 Workers 服务部署，可去掉 `pages_build_output_dir` 并在根级添加 `main = "src/index.ts"`。
 
 ### 5. 设置密钥与环境变量
 
