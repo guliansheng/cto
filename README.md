@@ -165,7 +165,7 @@ npm run dev
   - 在 **My Profile → API Keys** 中获取 Global API Key，并确认绑定的账号邮箱。
   - 通过环境变量或 `.env` 文件提供 `CLOUDFLARE_API_KEY`（或 `CF_API_KEY`）与 `CLOUDFLARE_EMAIL`（或 `CF_EMAIL`）。
 
-`npm run deploy` 会自动检测上述环境变量、`.env` 文件或 *_FILE 变量，并为 Wrangler 配置认证信息。
+`npm run deploy` 会自动检测上述环境变量、`.env` 文件、*_FILE 变量，或已通过 `wrangler login` 保存的本地凭证，并为 Wrangler 配置认证信息。
 
 ```bash
 npm run deploy
